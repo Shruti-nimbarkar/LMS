@@ -1,0 +1,60 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from backend.database import engine
+from backend.customer.models import Customer
+from backend.customer.routes import router as customer_router
+from backend.RFQs.models import RFQ
+from backend.RFQs.routes import router as rfq_router
+from backend.Estimations.models import Estimation, EstimationTestItem
+from backend.Estimations.routes import router as estimation_router
+from backend.project.models import Project
+from backend.project.routes import router as project_router
+from backend.certification.routes import router as certifications_router
+from backend.Audits.models import Audit
+from backend.Audits.routes import router as audit_router
+from backend.NCRs.models import NCR
+from backend.NCRs.routes import router as ncr_router
+
+
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 🔥 THIS LINE CREATES app.db + customers table
+Customer.metadata.create_all(bind=engine)
+
+app.include_router(customer_router)
+
+
+RFQ.metadata.create_all(bind=engine)
+app.include_router(rfq_router)
+
+
+Customer.metadata.create_all(bind=engine)
+RFQ.metadata.create_all(bind=engine)
+
+app.include_router(customer_router)
+app.include_router(rfq_router)
+
+
+Estimation.metadata.create_all(bind=engine)
+EstimationTestItem.metadata.create_all(bind=engine)
+
+app.include_router(estimation_router)
+
+Project.metadata.create_all(bind=engine)
+app.include_router(project_router)
+
+app.include_router(certifications_router)
+
+app.include_router(audit_router)
+
+
+app.include_router(ncr_router)

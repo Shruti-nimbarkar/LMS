@@ -1,0 +1,169 @@
+import { motion } from 'framer-motion'
+import { FolderKanban, Plus, Search, Filter, ExternalLink } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
+import { projectsService } from '../../../services/labManagementApi'
+import toast from 'react-hot-toast'
+import Modal from '../../../components/labManagement/Modal'
+import CreateProjectForm from '../../../components/labManagement/forms/CreateProjectForm'
+
+function Projects() {
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const [projects, setProjects] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+
+  useEffect(() => {
+    loadProjects()
+  }, [])
+
+  const loadProjects = async () => {
+    try {
+      setLoading(true)
+      const data = await projectsService.getAll()
+      setProjects(data)
+    } catch (error) {
+      toast.error('Failed to load projects')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const customerId = searchParams.get('customerId')
+  
+  const filteredProjects = projects.filter(project => {
+    const matchesSearch = project.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         project.clientName?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCustomer = !customerId || project.clientId?.toString() === customerId
+    return matchesSearch && matchesCustomer
+  })
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+          <p className="mt-4 text-gray-600">Loading projects...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
+          <p className="mt-2 text-gray-600">Manage all your lab projects</p>
+        </div>
+        <button 
+          onClick={() => setShowCreateModal(true)}
+          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2"
+        >
+          <Plus className="w-5 h-5" />
+          New Project
+        </button>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1">
+            <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search projects..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+          </div>
+          <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+            <Filter className="w-5 h-5" />
+            Filter
+          </button>
+        </div>
+      </div>
+
+      {/* Projects Grid */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {filteredProjects.map((project, index) => (
+          <motion.div
+            key={project.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => navigate(`/lab/management/projects/${project.id}`)}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                <FolderKanban className="w-6 h-6 text-primary" />
+              </div>
+              <span
+                className={`px-3 py-1 text-xs font-medium rounded-full ${
+                  project.status === 'active'
+                    ? 'text-blue-700 bg-blue-50'
+                    : project.status === 'completed'
+                    ? 'text-green-700 bg-green-50'
+                    : 'text-yellow-700 bg-yellow-50'
+                }`}
+              >
+                {project.status}
+              </span>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{project.name}</h3>
+            <p className="text-sm text-gray-600 mb-4">{project.clientName}</p>
+            {project.code && (
+              <p className="text-xs text-gray-500 mb-4">Code: {project.code}</p>
+            )}
+            <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigate(`/lab/management/projects/${project.id}`)
+                }}
+                className="text-sm text-primary hover:text-primary-dark flex items-center gap-1"
+              >
+                View Details
+                <ExternalLink className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigate(`/lab/management/test-plans?projectId=${project.id}`)
+                }}
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Test Plans
+              </button>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Create Modal */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Create New Project"
+        size="lg"
+      >
+        <CreateProjectForm
+          estimationId={searchParams.get('createFromEstimation')}
+          customerId={searchParams.get('customerId')}
+          onSuccess={() => {
+            setShowCreateModal(false)
+            loadProjects()
+          }}
+          onCancel={() => setShowCreateModal(false)}
+        />
+      </Modal>
+    </div>
+  )
+}
+
+export default Projects
