@@ -319,108 +319,84 @@ export { clearCache, setCached, getCached }
 
 // Test Plans Service
 export const testPlansService = {
-  getAll: async (projectId) => {
-    const cacheKey = projectId ? `testPlans:project:${projectId}` : 'testPlans:all'
-    const cached = getCached(cacheKey)
-    if (cached) return cached
-
-    await mockDelay()
-    const allPlans = [
-      {
-        id: 1,
-        projectId: 1,
-        projectName: 'EMC Testing - Project Alpha',
-        name: 'EMC Compliance Test Plan',
-        description: 'Full EMC testing suite for electromagnetic compatibility',
-        testType: 'EMC',
-        status: 'Approved',
-        assignedEngineerName: 'John Doe',
-        createdAt: '2024-01-15T10:00:00Z'
-      },
-      {
-        id: 2,
-        projectId: 1,
-        projectName: 'EMC Testing - Project Alpha',
-        name: 'RF Emission Test Plan',
-        description: 'RF emission testing and compliance verification',
-        testType: 'RF',
-        status: 'InProgress',
-        assignedEngineerName: 'Jane Smith',
-        createdAt: '2024-01-18T14:30:00Z'
-      },
-      {
-        id: 3,
-        projectId: 2,
-        projectName: 'RF Compliance Testing',
-        name: 'Safety Certification Test',
-        description: 'Safety testing and certification process',
-        testType: 'Safety',
-        status: 'Completed',
-        assignedEngineerName: 'Mike Johnson',
-        createdAt: '2024-01-10T09:00:00Z'
-      },
-      {
-        id: 4,
-        projectId: 2,
-        projectName: 'RF Compliance Testing',
-        name: 'Environmental Stress Test',
-        description: 'Environmental stress testing under various conditions',
-        testType: 'Environmental',
-        status: 'Draft',
-        assignedEngineerName: 'Sarah Williams',
-        createdAt: '2024-01-20T11:00:00Z'
-      },
-    ]
-
-    const data = projectId
-      ? allPlans.filter(plan => plan.projectId === parseInt(projectId))
-      : allPlans
-    setCached(cacheKey, data)
-    return data
+  // 🔹 GET ALL TEST PLANS
+  getAll: async () => {
+    const response = await apiService.get('/test-plans')
+    return Array.isArray(response) ? response : []
   },
-  getById: (id) => apiService.get(`/api/test-plans/${id}`),
-  create: (data) => apiService.post('/api/test-plans', data),
-  update: (id, data) => apiService.put(`/api/test-plans/${id}`, data),
-  delete: (id) => apiService.delete(`/api/test-plans/${id}`),
+
+  // 🔹 CREATE TEST PLAN
+  create: async (data) => {
+    const response = await apiService.post('/test-plans', data)
+
+    if (!response?.success) {
+      throw new Error('Test plan creation failed')
+    }
+
+    clearCache('test-plans:')
+    return response.testPlan
+  },
+
+  // 🔹 GET BY ID
+  getById: async (id) => {
+    return apiService.get(`/test-plans/${id}`)
+  },
 }
+
 
 // Test Executions Service
 export const testExecutionsService = {
-  getAll: async () => {
-    const cacheKey = 'testExecutions:all'
-    const cached = getCached(cacheKey)
-    if (cached) return cached
-
-    await mockDelay()
-    const data = []
-    setCached(cacheKey, data)
-    return data
+  // 🔹 GET BY TEST PLAN
+  getByTestPlan: async (testPlanId) => {
+    const response = await apiService.get(`/test-executions/by-test-plan/${testPlanId}`)
+    return Array.isArray(response) ? response : []
   },
-  getByTestPlan: (testPlanId) => apiService.get(`/api/test-executions?testPlanId=${testPlanId}`),
-  getById: (id) => apiService.get(`/api/test-executions/${id}`),
-  create: (data) => apiService.post('/api/test-executions', data),
-  update: (id, data) => apiService.put(`/api/test-executions/${id}`, data),
-  start: (id) => apiService.post(`/api/test-executions/${id}/start`, {}),
-  complete: (id) => apiService.post(`/api/test-executions/${id}/complete`, {}),
+
+  // 🔹 CREATE EXECUTION
+  create: async (data) => {
+    const response = await apiService.post('/test-executions', data)
+
+    if (!response?.success) {
+      throw new Error('Failed to create test execution')
+    }
+
+    clearCache('test-executions:')
+    return response.execution
+  },
+
+  // 🔹 GET BY ID
+  getById: async (id) => {
+    return apiService.get(`/test-executions/${id}`)
+  },
 }
+
 
 // Test Results Service
 export const testResultsService = {
-  getAll: async () => {
-    const cacheKey = 'testResults:all'
-    const cached = getCached(cacheKey)
-    if (cached) return cached
-
-    await mockDelay()
-    const data = []
-    setCached(cacheKey, data)
-    return data
+  // 🔹 GET BY EXECUTION
+  getByExecution: async (executionId) => {
+    const response = await apiService.get(`/test-results/by-execution/${executionId}`)
+    return Array.isArray(response) ? response : []
   },
-  getByExecution: (executionId) => apiService.get(`/api/test-results?executionId=${executionId}`),
-  getById: (id) => apiService.get(`/api/test-results/${id}`),
-  create: (data) => apiService.post('/api/test-results', data),
-  update: (id, data) => apiService.put(`/api/test-results/${id}`, data),
+
+  // 🔹 CREATE RESULT
+  create: async (data) => {
+    const response = await apiService.post('/test-results', data)
+
+    if (!response?.success) {
+      throw new Error('Failed to create test result')
+    }
+
+    clearCache('test-results:')
+    return response.result
+  },
+
+  // 🔹 GET BY ID
+  getById: async (id) => {
+    return apiService.get(`/test-results/${id}`)
+  },
 }
+
 
 // Samples Service
 export const samplesService = {

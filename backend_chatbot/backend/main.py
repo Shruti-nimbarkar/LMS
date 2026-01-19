@@ -14,6 +14,14 @@ from backend.Audits.models import Audit
 from backend.Audits.routes import router as audit_router
 from backend.NCRs.models import NCR
 from backend.NCRs.routes import router as ncr_router
+from backend.Test_Plans.models import TestPlan
+from backend.Test_Plans.routes import router as test_plan_router
+from backend.Test_execution.models import TestExecution
+from backend.Test_execution.routes import router as test_execution_router
+from backend.test_results.models import TestResult
+from backend.test_results.routes import router as test_result_router
+
+
 
 
 
@@ -58,3 +66,9 @@ app.include_router(audit_router)
 
 
 app.include_router(ncr_router)
+
+app.include_router(test_plan_router)
+
+app.include_router(test_execution_router)
+
+app.include_router(test_result_router)
