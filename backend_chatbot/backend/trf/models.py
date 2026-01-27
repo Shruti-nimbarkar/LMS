@@ -1,0 +1,14 @@
+from sqlalchemy import Column, Integer, String
+from backend.database import Base
+
+
+class TRF(Base):
+    __tablename__ = "trfs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    trfNumber = Column(String, index=True, nullable=True)
+
+    projectId = Column(Integer, nullable=False)
+    projectName = Column(String, nullable=False)
+
+    notes = Column(String, nullable=True)

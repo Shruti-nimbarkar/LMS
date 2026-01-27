@@ -399,56 +399,209 @@ export const testResultsService = {
 
 
 // Samples Service
+// Samples Service
 export const samplesService = {
   getAll: async (projectId) => {
-    const cacheKey = projectId ? `samples:project:${projectId}` : 'samples:all'
-    const cached = getCached(cacheKey)
-    if (cached) return cached
+    const url = projectId
+      ? `http://127.0.0.1:8000/samples/?projectId=${projectId}`
+      : 'http://127.0.0.1:8000/samples/'
 
-    await mockDelay()
-    const data = []
-    setCached(cacheKey, data)
-    return data
+    const res = await fetch(url)
+    if (!res.ok) {
+      throw new Error(await res.text())
+    }
+    return res.json()
   },
-  getById: (id) => apiService.get(`/api/samples/${id}`),
-  create: (data) => apiService.post('/api/samples', data),
-  update: (id, data) => apiService.put(`/api/samples/${id}`, data),
-  delete: (id) => apiService.delete(`/api/samples/${id}`),
+
+  getById: async (id) => {
+    const res = await fetch(`http://127.0.0.1:8000/samples/${id}`)
+    if (!res.ok) {
+      throw new Error(await res.text())
+    }
+    return res.json()
+  },
+
+  create: async (data) => {
+    const res = await fetch('http://127.0.0.1:8000/samples/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!res.ok) {
+      const error = await res.text()
+      throw new Error(error)
+    }
+
+    return res.json()
+  },
+
+  update: async (id, data) => {
+    const res = await fetch(`http://127.0.0.1:8000/samples/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+
+    if (!res.ok) {
+      throw new Error(await res.text())
+    }
+
+    return res.json()
+  },
+
+  delete: async (id) => {
+    const res = await fetch(`http://127.0.0.1:8000/samples/${id}`, {
+      method: 'DELETE',
+    })
+
+    if (!res.ok) {
+      throw new Error(await res.text())
+    }
+
+    return true
+  },
 }
 
 // TRFs Service
 export const trfsService = {
-  getAll: async (projectId) => {
-    const cacheKey = projectId ? `trfs:project:${projectId}` : 'trfs:all'
-    const cached = getCached(cacheKey)
-    if (cached) return cached
-
-    await mockDelay()
-    const data = []
-    setCached(cacheKey, data)
-    return data
+  /**
+   * Get all TRFs
+   */
+  getAll: async () => {
+    return apiService.get('/trfs')
   },
-  getById: (id) => apiService.get(`/api/trfs/${id}`),
-  create: (data) => apiService.post('/api/trfs', data),
-  update: (id, data) => apiService.put(`/api/trfs/${id}`, data),
-  delete: (id) => apiService.delete(`/api/trfs/${id}`),
+
+  /**
+   * Get TRF by ID
+   * @param {number} id
+   */
+  getById: async (id) => {
+    return apiService.get(`/trfs/${id}`)
+  },
+
+  /**
+   * Create new TRF
+   * @param {object} data
+   */
+  create: async (data) => {
+    return apiService.post('/trfs', data)
+  },
+
+  /**
+   * Update TRF (future-ready)
+   * @param {number} id
+   * @param {object} data
+   */
+  update: async (id, data) => {
+    return apiService.put(`/trfs/${id}`, data)
+  },
+
+  /**
+   * Delete TRF (future-ready)
+   * @param {number} id
+   */
+  delete: async (id) => {
+    return apiService.delete(`/trfs/${id}`)
+  }
 }
 
 // Documents Service
 export const documentsService = {
-  getAll: () => apiService.get('/api/documents'),
-  getById: (id) => apiService.get(`/api/documents/${id}`),
-  create: (data) => apiService.post('/api/documents', data),
-  update: (id, data) => apiService.put(`/api/documents/${id}`, data),
-  delete: (id) => apiService.delete(`/api/documents/${id}`),
+  /**
+   * Get all documents
+   */
+  getAll: async () => {
+    return apiService.get('/documents')
+  },
+
+  /**
+   * Upload document (multipart/form-data)
+   * IMPORTANT: bypass apiService.post to avoid JSON header
+   */
+  create: async (formData) => {
+    const response = await apiService.client.post(
+      '/documents',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    )
+    return response.data
+  },
+
+  /**
+   * Download document (binary)
+   * IMPORTANT: use axios client directly
+   */
+  download: async (id) => {
+    const response = await apiService.client.get(
+      `/documents/${id}/download`,
+      {
+        responseType: 'blob',
+      }
+    )
+    return response.data
+  },
+
+  /**
+   * Delete document (future-ready)
+   */
+  delete: async (id) => {
+    return apiService.delete(`/documents/${id}`)
+  },
 }
 
 // Reports Service
 export const reportsService = {
-  getAll: () => apiService.get('/api/reports'),
-  getById: (id) => apiService.get(`/api/reports/${id}`),
-  generate: (data) => apiService.post('/api/reports/generate', data),
+  /**
+   * Get all reports
+   */
+  getAll: async () => {
+    return apiService.get('/reports')
+  },
+
+  /**
+   * Upload report (multipart/form-data)
+   */
+  create: async (formData) => {
+    const response = await apiService.client.post(
+      '/reports',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    )
+    return response.data
+  },
+
+  /**
+   * Download report file
+   */
+  download: async (id) => {
+    const response = await apiService.client.get(
+      `/reports/${id}/download`,
+      {
+        responseType: 'blob',
+      }
+    )
+    return response.data
+  },
+
+  /**
+   * Delete report
+   */
+  delete: async (id) => {
+    return apiService.delete(`/reports/${id}`)
+  },
 }
+
 
 // Audits Service
 export const auditsService = {

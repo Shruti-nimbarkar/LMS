@@ -20,7 +20,10 @@ from backend.Test_execution.models import TestExecution
 from backend.Test_execution.routes import router as test_execution_router
 from backend.test_results.models import TestResult
 from backend.test_results.routes import router as test_result_router
-
+from backend.samples.routes import router as samples_router
+from backend.trf.routes import router as trfs_router
+from backend.reports.routes import router as reports_router
+from backend.document.routes import router as documents_router
 
 
 
@@ -72,3 +75,21 @@ app.include_router(test_plan_router)
 app.include_router(test_execution_router)
 
 app.include_router(test_result_router)
+
+app.include_router(samples_router)
+app.include_router(trfs_router)
+app.include_router(reports_router)
+app.include_router(documents_router)
+
+
+from backend.samples import models as sample_models
+from backend.trf import models as trf_models
+from backend.reports import models as report_models
+from backend.document import models as document_models
+
+# ✅ Create tables
+# Base.metadata.create_all(bind=engine)
+
+@app.get("/")
+def root():
+    return {"status": "LMS Backend Running"}
